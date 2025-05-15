@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "791346977830",
+    "project_id": "kafedrameetingapp-432a6",
+    "storage_bucket": "kafedrameetingapp-432a6.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:791346977830:android:8156c1e07d155a21749ae7",
+        "android_client_info": {
+          "package_name": "com.example.kafedrameetingapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAgLNhawoVkAK2N_9dGm-iNyZU2S0S9H5o"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
