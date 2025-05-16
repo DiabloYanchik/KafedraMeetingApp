@@ -1,19 +1,24 @@
 package com.example.kafedrameetingapp;
 
+import android.app.AlarmManager;
 import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.*;
+import android.widget.Toast;
+
 import androidx.appcompat.app.AppCompatActivity;
+
+import com.example.kafedrameetingapp.models.Meeting;
+import com.example.kafedrameetingapp.utils.AlarmUtils;
+import com.example.kafedrameetingapp.utils.FirebaseUtils;
+
 import java.util.Calendar;
-import android.app.AlarmManager;
-import android.app.PendingIntent;
-import android.content.Context;
 
 public class CreateMeetingActivity extends AppCompatActivity {
     EditText editTopic, editAgenda, editDate, editTime;
@@ -31,7 +36,6 @@ public class CreateMeetingActivity extends AppCompatActivity {
                     editDate.setText(formattedDate);
                 },
                 year, month, day);
-
         datePickerDialog.show();
     }
 
@@ -45,8 +49,7 @@ public class CreateMeetingActivity extends AppCompatActivity {
                     String formattedTime = String.format("%02d:%02d", selectedHour, selectedMinute);
                     editTime.setText(formattedTime);
                 },
-                hour, minute, true); // true — 24-часовой формат
-
+                hour, minute, true);
         timePickerDialog.show();
     }
 
@@ -60,11 +63,10 @@ public class CreateMeetingActivity extends AppCompatActivity {
         editDate = findViewById(R.id.editDate);
         editTime = findViewById(R.id.editTime);
         btnSave = findViewById(R.id.btnSave);
-//
+
         editDate.setOnClickListener(v -> showDatePicker());
         editTime.setOnClickListener(v -> showTimePicker());
 
-        //
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
             if (alarmManager != null && !alarmManager.canScheduleExactAlarms()) {
@@ -74,37 +76,70 @@ public class CreateMeetingActivity extends AppCompatActivity {
         }
 
         btnSave.setOnClickListener(v -> {
-            String topic = editTopic.getText().toString();
-            String agenda = editAgenda.getText().toString();
+            String topic = editTopic.getText().toString().trim();
+            String agenda = editAgenda.getText().toString().trim();
             String date = editDate.getText().toString();
             String time = editTime.getText().toString();
-            int protocol = JsonUtils.getNextProtocolNumber(this);
 
-            Meeting meeting = new Meeting(topic, agenda, date, time, protocol);
-            JsonUtils.saveMeeting(this, meeting);
+            if (topic.isEmpty() || agenda.isEmpty() || date.isEmpty() || time.isEmpty()) {
+                Toast.makeText(this, R.string.error_empty_fields, Toast.LENGTH_SHORT).show();
+                return;
+            }
 
             Calendar calendar = Calendar.getInstance();
             String[] dateParts = date.split("\\.");
             String[] timeParts = time.split(":");
-            calendar.set(Calendar.YEAR, Integer.parseInt(dateParts[2]));
-            calendar.set(Calendar.MONTH, Integer.parseInt(dateParts[1]) - 1);
-            calendar.set(Calendar.DAY_OF_MONTH, Integer.parseInt(dateParts[0]));
-            calendar.set(Calendar.HOUR_OF_DAY, Integer.parseInt(timeParts[0]));
-            calendar.set(Calendar.MINUTE, Integer.parseInt(timeParts[1]));
+            try {
+                calendar.set(Calendar.YEAR, Integer.parseInt(dateParts[2]));
+                calendar.set(Calendar.MONTH, Integer.parseInt(dateParts[1]) - 1);
+                calendar.set(Calendar.DAY_OF_MONTH, Integer.parseInt(dateParts[0]));
+                calendar.set(Calendar.HOUR_OF_DAY, Integer.parseInt(timeParts[0]));
+                calendar.set(Calendar.MINUTE, Integer.parseInt(timeParts[1]));
+                calendar.set(Calendar.SECOND, 0);
 
+                if (calendar.before(Calendar.getInstance())) {
+                    Toast.makeText(this, R.string.error_past_date, Toast.LENGTH_SHORT).show();
+                    return;
+                }
+            } catch (Exception e) {
+                Toast.makeText(this, R.string.error_invalid_date, Toast.LENGTH_SHORT).show();
+                return;
+            }
 
-            // Планируем уведомления
-            new Thread(() -> {
-                AlarmUtils.scheduleAlarms(this, calendar, protocol);
-                // Завершаем активность на главном потоке
-                runOnUiThread(() -> finish());
-            }).start();
+            FirebaseUtils.getNextProtocolNumber(new FirebaseUtils.Callback() {
+                @Override
+                public void onSuccess(int protocolNumber) {
+                    Meeting meeting = new Meeting(topic, agenda, date, time, protocolNumber);
+                    FirebaseUtils.saveMeeting(meeting, new FirebaseUtils.Callback() {
+                        @Override
+                        public void onSuccess() {
+                            AlarmUtils.scheduleAlarms(CreateMeetingActivity.this, calendar, meeting);
+                            Toast.makeText(CreateMeetingActivity.this, R.string.meeting_saved, Toast.LENGTH_SHORT).show();
+                            finish();
+                        }
+
+                        @Override
+                        public void onSuccess(int ignored) {
+                            // Пустая реализация
+                        }
+
+                        @Override
+                        public void onError(Exception e) {
+                            Toast.makeText(CreateMeetingActivity.this, "Ошибка сохранения: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                }
+
+                @Override
+                public void onSuccess() {
+                    // Пустая реализация
+                }
+
+                @Override
+                public void onError(Exception e) {
+                    Toast.makeText(CreateMeetingActivity.this, "Ошибка получения номера протокола: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                }
+            });
         });
-
-
-
-
-
     }
 }
-
