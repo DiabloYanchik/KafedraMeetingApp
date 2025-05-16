@@ -1,9 +1,11 @@
 package com.example.kafedrameetingapp;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
@@ -34,7 +36,7 @@ import java.util.List;
 import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity {
-    Button btnCreate;
+    Button btnCreate, btnArchive, btnLogout;
     RecyclerView recyclerView;
     MeetingAdapter adapter;
     List<Meeting> meetings;
@@ -55,6 +57,8 @@ public class MainActivity extends AppCompatActivity {
         }
 
         btnCreate = findViewById(R.id.btnCreateMeeting);
+        btnArchive = findViewById(R.id.btnArchive);
+        btnLogout = findViewById(R.id.btnLogout);
         recyclerView = findViewById(R.id.recyclerViewMeetings);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
@@ -69,12 +73,14 @@ public class MainActivity extends AppCompatActivity {
         FirebaseUtils.loadMeetings(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
+                Log.d("MainActivity", "DataSnapshot: " + snapshot.toString());
                 meetings.clear();
                 for (DataSnapshot data : snapshot.getChildren()) {
                     Meeting meeting = data.getValue(Meeting.class);
                     if (meeting != null) {
                         meeting.setId(data.getKey());
                         meetings.add(meeting);
+                        Log.d("MainActivity", "Meeting loaded: " + meeting.getTopic());
                     }
                 }
                 Collections.sort(meetings, (m1, m2) -> {
@@ -108,8 +114,25 @@ public class MainActivity extends AppCompatActivity {
             startActivity(intent);
         });
 
+        btnArchive.setOnClickListener(v -> {
+            Intent intent = new Intent(this, ArchiveActivity.class);
+            startActivity(intent);
+        });
+
+        btnLogout.setOnClickListener(v -> {
+            FirebaseAuth.getInstance().signOut();
+            SharedPreferences prefs = getSharedPreferences("LoginPrefs", MODE_PRIVATE);
+            SharedPreferences.Editor editor = prefs.edit();
+            editor.clear();
+            editor.apply();
+            Intent intent = new Intent(this, LoginActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            startActivity(intent);
+            finish();
+        });
+
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-        if (user != null && user.getEmail().equals("head@example.com")) {
+        if (user != null && user.getEmail().equals("yaniayurieva@gmail.com")) {
             btnCreate.setVisibility(View.VISIBLE);
         } else {
             btnCreate.setVisibility(View.GONE);

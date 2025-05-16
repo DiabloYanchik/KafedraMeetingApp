@@ -29,11 +29,13 @@ public class NotificationReceiver extends BroadcastReceiver {
         String topic = intent.getStringExtra("topic");
         String date = intent.getStringExtra("date");
         String time = intent.getStringExtra("time");
+        String roomNumber = intent.getStringExtra("roomNumber");
 
         String message = "Заседание скоро начнется.\n" +
                 "Тема: " + (topic != null ? topic : "Не указано") + "\n" +
                 "Дата: " + (date != null ? date : "") + " " + (time != null ? time : "") +
-                (protocolNumber != 0 ? "\nПротокол №" + protocolNumber : "");
+                (protocolNumber != 0 ? "\nПротокол №" + protocolNumber : "") +
+                (roomNumber != null ? "\nКабинет: " + roomNumber : "");
 
         Intent notificationIntent = new Intent(context, MainActivity.class);
         PendingIntent pendingIntent = PendingIntent.getActivity(

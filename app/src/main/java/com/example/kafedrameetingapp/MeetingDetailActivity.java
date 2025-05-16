@@ -35,10 +35,12 @@ public class MeetingDetailActivity extends AppCompatActivity {
         time.setText("Время: " + (meeting.time != null ? meeting.time : ""));
         protocol.setText("Протокол №: " + meeting.protocolNumber);
 
+        boolean isArchived = getIntent().getBooleanExtra("isArchived", false);
+
         String userEmail = FirebaseAuth.getInstance().getCurrentUser() != null ?
                 FirebaseAuth.getInstance().getCurrentUser().getEmail() : null;
-        if (userEmail != null && userEmail.equals("head@example.com")) {
-            btnEdit.setVisibility(View.VISIBLE);
+        if (userEmail != null && userEmail.equals("yaniayurieva@gmail.com")) {
+            btnEdit.setVisibility(isArchived ? View.GONE : View.VISIBLE);
             btnDelete.setVisibility(View.VISIBLE);
         } else {
             btnEdit.setVisibility(View.GONE);
@@ -53,7 +55,7 @@ public class MeetingDetailActivity extends AppCompatActivity {
 
         btnDelete.setOnClickListener(v -> {
             if (meeting.getId() != null) {
-                FirebaseUtils.deleteMeeting(meeting.getId(), new FirebaseUtils.Callback() {
+                FirebaseUtils.Callback callback = new FirebaseUtils.Callback() {
                     @Override
                     public void onSuccess() {
                         Toast.makeText(MeetingDetailActivity.this, "Заседание удалено", Toast.LENGTH_SHORT).show();
@@ -69,7 +71,13 @@ public class MeetingDetailActivity extends AppCompatActivity {
                     public void onError(Exception e) {
                         Toast.makeText(MeetingDetailActivity.this, "Ошибка удаления: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                     }
-                });
+                };
+
+                if (isArchived) {
+                    FirebaseUtils.deleteArchiveMeeting(meeting.getId(), callback);
+                } else {
+                    FirebaseUtils.deleteMeeting(meeting.getId(), callback);
+                }
             } else {
                 Toast.makeText(this, "Ошибка: ID заседания не найдено", Toast.LENGTH_SHORT).show();
             }
