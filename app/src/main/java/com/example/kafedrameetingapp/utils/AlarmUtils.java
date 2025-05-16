@@ -4,6 +4,8 @@ import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Build;
+import android.util.Log;
 
 import com.example.kafedrameetingapp.models.Meeting;
 import com.example.kafedrameetingapp.work.NotificationReceiver;
@@ -11,6 +13,8 @@ import com.example.kafedrameetingapp.work.NotificationReceiver;
 import java.util.Calendar;
 
 public class AlarmUtils {
+    private static final String TAG = "AlarmUtils";
+
     public static void scheduleAlarms(Context context, Calendar meetingTime, Meeting meeting) {
         scheduleAlarm(context, meetingTime.getTimeInMillis() - 2 * 60 * 60 * 1000, meeting.protocolNumber * 100 + 1, meeting);
         scheduleAlarm(context, meetingTime.getTimeInMillis() - 15 * 60 * 1000, meeting.protocolNumber * 100 + 2, meeting);
@@ -26,6 +30,16 @@ public class AlarmUtils {
                 context, requestCode, intent, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
 
         AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
-        alarmManager.setExact(AlarmManager.RTC_WAKEUP, triggerTime, pendingIntent);
+        if (alarmManager != null) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !alarmManager.canScheduleExactAlarms()) {
+                Log.d(TAG, "Using inexact alarm due to lack of SCHEDULE_EXACT_ALARM permission");
+                alarmManager.set(AlarmManager.RTC_WAKEUP, triggerTime, pendingIntent);
+            } else {
+                Log.d(TAG, "Scheduling exact alarm");
+                alarmManager.setExact(AlarmManager.RTC_WAKEUP, triggerTime, pendingIntent);
+            }
+        } else {
+            Log.e(TAG, "AlarmManager is null");
+        }
     }
 }

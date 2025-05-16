@@ -2,8 +2,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.example.kafedrameetingapp">
 
+    <!-- Разрешения -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
 
     <application
         android:name=".MeetingApp"
@@ -14,6 +16,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.KafedraMeetingApp">
 
+        <!-- Сервис для Firebase Cloud Messaging -->
         <service
             android:name="com.google.firebase.messaging.FirebaseMessagingService"
             android:exported="false">
@@ -22,6 +25,7 @@
             </intent-filter>
         </service>
 
+        <!-- Активности -->
         <activity
             android:name=".LoginActivity"
             android:exported="true">
@@ -39,7 +43,11 @@
         <activity
             android:name=".MeetingDetailActivity"
             android:exported="false" />
+        <activity
+            android:name=".ArchiveActivity"
+            android:exported="false" />
 
+        <!-- Ресивер для уведомлений -->
         <receiver
             android:name=".work.NotificationReceiver"
             android:exported="false">
@@ -48,4 +56,5 @@
             </intent-filter>
         </receiver>
     </application>
+
 </manifest>

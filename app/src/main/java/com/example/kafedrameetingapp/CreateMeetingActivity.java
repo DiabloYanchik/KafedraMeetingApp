@@ -8,6 +8,7 @@ import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
+import android.util.Log;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
@@ -21,6 +22,7 @@ import com.example.kafedrameetingapp.utils.FirebaseUtils;
 import java.util.Calendar;
 
 public class CreateMeetingActivity extends AppCompatActivity {
+    private static final String TAG = "CreateMeetingActivity";
     EditText editTopic, editAgenda, editDate, editTime;
     Button btnSave;
 
@@ -64,14 +66,33 @@ public class CreateMeetingActivity extends AppCompatActivity {
         editTime = findViewById(R.id.editTime);
         btnSave = findViewById(R.id.btnSave);
 
+        Meeting existingMeeting = (Meeting) getIntent().getSerializableExtra("meeting");
+        if (existingMeeting != null) {
+            editTopic.setText(existingMeeting.getTopic());
+            editAgenda.setText(existingMeeting.getAgenda());
+            editDate.setText(existingMeeting.getDate());
+            editTime.setText(existingMeeting.getTime());
+            setTitle("Редактировать заседание");
+        } else {
+            setTitle("Создать заседание");
+        }
+
         editDate.setOnClickListener(v -> showDatePicker());
         editTime.setOnClickListener(v -> showTimePicker());
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
-            if (alarmManager != null && !alarmManager.canScheduleExactAlarms()) {
-                Intent intent = new Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM);
-                startActivity(intent);
+            if (alarmManager != null) {
+                if (!alarmManager.canScheduleExactAlarms()) {
+                    Log.d(TAG, "Requesting SCHEDULE_EXACT_ALARM permission");
+                    Intent intent = new Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM);
+                    startActivity(intent);
+                } else {
+                    Log.d(TAG, "SCHEDULE_EXACT_ALARM permission already granted");
+                }
+            } else {
+                Log.e(TAG, "AlarmManager is null");
+                Toast.makeText(this, "Ошибка: AlarmManager недоступен", Toast.LENGTH_SHORT).show();
             }
         }
 
