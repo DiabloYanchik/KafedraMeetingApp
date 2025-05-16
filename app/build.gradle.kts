@@ -1,5 +1,6 @@
 plugins {
     alias(libs.plugins.android.application)
+    alias(libs.plugins.google.services)
 }
 
 android {
@@ -35,8 +36,17 @@ dependencies {
     //доп
     implementation ("com.google.code.gson:gson:2.10.1")
 
-    implementation(libs.appcompat)
-    implementation(libs.material)
+    implementation(libs.firebase.database)
+    implementation(libs.firebase.messaging)
+    implementation(libs.firebase.auth)
+
+    implementation (libs.core)
+
+    implementation (libs.cardview )// Для CardView
+    implementation (libs.recyclerview)
+
+    implementation(libs.androidx.appcompat)
+    implementation(libs.androidx.material)
     implementation(libs.activity)
     implementation(libs.constraintlayout)
     testImplementation(libs.junit)

@@ -1,16 +1,28 @@
-package com.example.kafedrameetingapp;
+package com.example.kafedrameetingapp.adapters;
+
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.example.kafedrameetingapp.models.Meeting;
+import com.example.kafedrameetingapp.R;
+
 import java.util.List;
+
 public class MeetingAdapter extends RecyclerView.Adapter<MeetingAdapter.MeetingViewHolder> {
     private List<Meeting> meetingList;
+    private OnItemClickListener listener;
 
-    public MeetingAdapter(List<Meeting> meetingList) {
+    public interface OnItemClickListener {
+        void onItemClick(Meeting meeting);
+    }
+
+    public MeetingAdapter(List<Meeting> meetingList, OnItemClickListener listener) {
         this.meetingList = meetingList;
+        this.listener = listener;
     }
 
     @NonNull
@@ -24,11 +36,13 @@ public class MeetingAdapter extends RecyclerView.Adapter<MeetingAdapter.MeetingV
     @Override
     public void onBindViewHolder(@NonNull MeetingViewHolder holder, int position) {
         Meeting meeting = meetingList.get(position);
-        holder.topic.setText("Тема: " + meeting.topic);
-        holder.agenda.setText("Повестка дня: " + meeting.agenda);
-        holder.date.setText("Дата: " + meeting.date);
-        holder.time.setText("Время: " + meeting.time);
+        holder.topic.setText("Тема: " + (meeting.topic != null ? meeting.topic : ""));
+        holder.agenda.setText("Повестка дня: " + (meeting.agenda != null ? meeting.agenda : ""));
+        holder.date.setText("Дата: " + (meeting.date != null ? meeting.date : ""));
+        holder.time.setText("Время: " + (meeting.time != null ? meeting.time : ""));
         holder.protocol.setText("Протокол №: " + meeting.protocolNumber);
+
+        holder.itemView.setOnClickListener(v -> listener.onItemClick(meeting));
     }
 
     @Override

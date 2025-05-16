@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">KafedraMeetingApp</string>
+    <string name="error_empty_fields">Заполните все поля</string>
+    <string name="error_past_date">Нельзя создать заседание в прошлом</string>
+    <string name="error_invalid_date">Некорректный формат даты или времени</string>
+    <string name="meeting_saved">Заседание сохранено</string>
 </resources>
