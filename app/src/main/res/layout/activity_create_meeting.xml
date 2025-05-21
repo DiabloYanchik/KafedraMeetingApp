@@ -26,29 +26,32 @@
 
         <EditText
             android:id="@+id/editDate"
-            android:hint="Дата (дд.мм.гггг)"
-            android:minHeight="48dp"
-            android:padding="12dp"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
+            android:layout_height="wrap_content"
+            android:hint="Дата (дд.мм.гггг)"
+            android:inputType="none"
+            android:focusable="false"
+            android:layout_marginTop="16dp" />
 
         <EditText
             android:id="@+id/editTime"
-            android:hint="Время (чч:мм)"
-            android:minHeight="48dp"
-            android:padding="12dp"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
+            android:layout_height="wrap_content"
+            android:hint="Время (чч:мм)"
+            android:inputType="none"
+            android:focusable="false"
+            android:layout_marginTop="16dp" />
 
         <EditText
             android:id="@+id/editRoomNumber"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Номер кабинета (опционально)"
+            android:hint="Номер кабинета"
             android:inputType="text"/>
 
         <Button
             android:id="@+id/btnSave"
+            android:backgroundTint="@color/blue"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Сохранить" />

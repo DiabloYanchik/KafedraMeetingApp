@@ -4,7 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:padding="16dp">
+    android:padding="35dp">
 
     <EditText
         android:id="@+id/editEmail"
@@ -24,10 +24,15 @@
         android:id="@+id/btnLogin"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:backgroundTint="@color/blue"
+        android:elevation="24dp"
         android:text="Войти" />
 
     <Button
         android:id="@+id/btnRegister"
+android:backgroundTint="@color/blue"
+        android:elevation="24dp"
+
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Зарегистрироваться" />

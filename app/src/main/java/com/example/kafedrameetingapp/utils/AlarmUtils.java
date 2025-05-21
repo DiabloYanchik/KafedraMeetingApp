@@ -16,10 +16,10 @@ public class AlarmUtils {
     private static final String TAG = "AlarmUtils";
 
     public static void scheduleAlarms(Context context, Calendar meetingTime, Meeting meeting) {
-        scheduleLocalAlarm(context, meetingTime.getTimeInMillis() - 2 * 60 * 1000, meeting.getProtocolNumber() * 100 + 1, meeting, "2 минуты");
-        scheduleLocalAlarm(context, meetingTime.getTimeInMillis() - 1 * 60 * 1000, meeting.getProtocolNumber() * 100 + 2, meeting, "1 минута");
-        scheduleFCMNotification(meeting, meetingTime.getTimeInMillis() - 2 * 60 * 1000, "2 минуты");
-        scheduleFCMNotification(meeting, meetingTime.getTimeInMillis() - 1 * 60 * 1000, "1 минута");
+        scheduleLocalAlarm(context, meetingTime.getTimeInMillis() - 60 * 60 * 1000, meeting.getProtocolNumber() * 100 + 1, meeting, "60 минут");
+        scheduleLocalAlarm(context, meetingTime.getTimeInMillis() - 15 * 60 * 1000, meeting.getProtocolNumber() * 100 + 2, meeting, "15 минут");
+        scheduleFCMNotification(meeting, meetingTime.getTimeInMillis() - 60 * 60 * 1000, "60 минут");
+        scheduleFCMNotification(meeting, meetingTime.getTimeInMillis() - 15 * 60 * 1000, "15 минут");
     }
 
     private static void scheduleLocalAlarm(Context context, long triggerTime, int requestCode, Meeting meeting, String timeBefore) {

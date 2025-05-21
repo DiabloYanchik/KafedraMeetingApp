@@ -10,6 +10,8 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException;
+import com.google.firebase.auth.FirebaseAuthInvalidUserException;
 
 public class LoginActivity extends AppCompatActivity {
     private FirebaseAuth mAuth;
@@ -54,7 +56,14 @@ public class LoginActivity extends AppCompatActivity {
                             startActivity(new Intent(this, MainActivity.class));
                             finish();
                         } else {
-                            Toast.makeText(this, "Ошибка входа: " + task.getException().getMessage(), Toast.LENGTH_SHORT).show();
+                            // Проверяем тип ошибки
+                            Exception e = task.getException();
+                            if (e instanceof FirebaseAuthInvalidCredentialsException ||
+                                    e instanceof FirebaseAuthInvalidUserException) {
+                                Toast.makeText(this, "Неверный логин или пароль", Toast.LENGTH_SHORT).show();
+                            } else {
+                                Toast.makeText(this, "Ошибка входа: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                            }
                         }
                     });
         });
@@ -90,7 +99,14 @@ public class LoginActivity extends AppCompatActivity {
                                             startActivity(new Intent(this, MainActivity.class));
                                             finish();
                                         } else {
-                                            Toast.makeText(this, "Ошибка входа после регистрации: " + signInTask.getException().getMessage(), Toast.LENGTH_SHORT).show();
+                                            // Проверяем тип ошибки при входе после регистрации
+                                            Exception e = signInTask.getException();
+                                            if (e instanceof FirebaseAuthInvalidCredentialsException ||
+                                                    e instanceof FirebaseAuthInvalidUserException) {
+                                                Toast.makeText(this, "Неверный логин или пароль", Toast.LENGTH_SHORT).show();
+                                            } else {
+                                                Toast.makeText(this, "Ошибка входа после регистрации: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                                            }
                                         }
                                     });
                         } else {
