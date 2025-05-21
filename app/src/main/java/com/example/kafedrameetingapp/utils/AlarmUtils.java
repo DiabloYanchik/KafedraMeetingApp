@@ -16,16 +16,29 @@ public class AlarmUtils {
     private static final String TAG = "AlarmUtils";
 
     public static void scheduleAlarms(Context context, Calendar meetingTime, Meeting meeting) {
-        scheduleAlarm(context, meetingTime.getTimeInMillis() - 2 * 60 * 60 * 1000, meeting.protocolNumber * 100 + 1, meeting);
-        scheduleAlarm(context, meetingTime.getTimeInMillis() - 15 * 60 * 1000, meeting.protocolNumber * 100 + 2, meeting);
+        scheduleLocalAlarm(context, meetingTime.getTimeInMillis() - 2 * 60 * 1000, meeting.getProtocolNumber() * 100 + 1, meeting, "2 минуты");
+        scheduleLocalAlarm(context, meetingTime.getTimeInMillis() - 1 * 60 * 1000, meeting.getProtocolNumber() * 100 + 2, meeting, "1 минута");
+        scheduleFCMNotification(meeting, meetingTime.getTimeInMillis() - 2 * 60 * 1000, "2 минуты");
+        scheduleFCMNotification(meeting, meetingTime.getTimeInMillis() - 1 * 60 * 1000, "1 минута");
     }
 
-    private static void scheduleAlarm(Context context, long triggerTime, int requestCode, Meeting meeting) {
+    private static void scheduleLocalAlarm(Context context, long triggerTime, int requestCode, Meeting meeting, String timeBefore) {
+        if (triggerTime < System.currentTimeMillis()) {
+            Log.d(TAG, "Время уведомления уже прошло, пропускаем: " + requestCode);
+            return;
+        }
+
+        String message = "Заседание скоро начнется (за " + timeBefore + ").\n" +
+                "Тема: " + (meeting.getTopic() != null ? meeting.getTopic() : "Не указано") + "\n" +
+                "Дата: " + (meeting.getDate() != null ? meeting.getDate() : "") + " " +
+                (meeting.getTime() != null ? meeting.getTime() : "") +
+                (meeting.getProtocolNumber() != 0 ? "\nПротокол №" + meeting.getProtocolNumber() : "") +
+                (meeting.getRoomNumber() != null && !meeting.getRoomNumber().isEmpty() ?
+                        "\nКабинет: " + meeting.getRoomNumber() : "");
+
         Intent intent = new Intent(context, NotificationReceiver.class);
-        intent.putExtra("protocolNumber", meeting.protocolNumber);
-        intent.putExtra("topic", meeting.topic);
-        intent.putExtra("date", meeting.date);
-        intent.putExtra("time", meeting.time);
+        intent.putExtra("title", "Скоро заседание кафедры!");
+        intent.putExtra("message", message);
         PendingIntent pendingIntent = PendingIntent.getBroadcast(
                 context, requestCode, intent, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
 
@@ -35,11 +48,33 @@ public class AlarmUtils {
                 Log.d(TAG, "Using inexact alarm due to lack of SCHEDULE_EXACT_ALARM permission");
                 alarmManager.set(AlarmManager.RTC_WAKEUP, triggerTime, pendingIntent);
             } else {
-                Log.d(TAG, "Scheduling exact alarm");
+                Log.d(TAG, "Scheduling exact alarm for requestCode: " + requestCode);
                 alarmManager.setExact(AlarmManager.RTC_WAKEUP, triggerTime, pendingIntent);
             }
         } else {
             Log.e(TAG, "AlarmManager is null");
         }
+    }
+
+    private static void scheduleFCMNotification(Meeting meeting, long triggerTime, String timeBefore) {
+        if (triggerTime < System.currentTimeMillis()) {
+            Log.d(TAG, "Время уведомления уже прошло, пропускаем: " + meeting.getTopic());
+            return;
+        }
+        if (meeting.getId() == null) {
+            Log.e(TAG, "Meeting ID is null for meeting: " + meeting.getTopic());
+            return;
+        }
+
+        String message = "Заседание скоро начнется (за " + timeBefore + ").\n" +
+                "Тема: " + (meeting.getTopic() != null ? meeting.getTopic() : "Не указано") + "\n" +
+                "Дата: " + (meeting.getDate() != null ? meeting.getDate() : "") + " " +
+                (meeting.getTime() != null ? meeting.getTime() : "") +
+                (meeting.getProtocolNumber() != 0 ? "\nПротокол №" + meeting.getProtocolNumber() : "") +
+                (meeting.getRoomNumber() != null && !meeting.getRoomNumber().isEmpty() ?
+                        "\nКабинет: " + meeting.getRoomNumber() : "");
+
+        FirebaseUtils.scheduleNotification(meeting.getId(), triggerTime, message);
+        Log.d(TAG, "Scheduled FCM notification for meeting: " + meeting.getTopic() + " at " + triggerTime);
     }
 }

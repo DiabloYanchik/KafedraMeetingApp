@@ -41,6 +41,7 @@ public class MeetingAdapter extends RecyclerView.Adapter<MeetingAdapter.MeetingV
         holder.date.setText("Дата: " + (meeting.date != null ? meeting.date : ""));
         holder.time.setText("Время: " + (meeting.time != null ? meeting.time : ""));
         holder.protocol.setText("Протокол №: " + meeting.protocolNumber);
+        holder.roomNumber.setText("Кабинет: " + (meeting.roomNumber != null && !meeting.roomNumber.isEmpty() ? meeting.roomNumber : "Не указан"));
 
         holder.itemView.setOnClickListener(v -> listener.onItemClick(meeting));
     }
@@ -51,7 +52,7 @@ public class MeetingAdapter extends RecyclerView.Adapter<MeetingAdapter.MeetingV
     }
 
     static class MeetingViewHolder extends RecyclerView.ViewHolder {
-        TextView topic, agenda, date, time, protocol;
+        TextView topic, agenda, date, time, protocol, roomNumber;
 
         public MeetingViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -60,6 +61,7 @@ public class MeetingAdapter extends RecyclerView.Adapter<MeetingAdapter.MeetingV
             date = itemView.findViewById(R.id.textDate);
             time = itemView.findViewById(R.id.textTime);
             protocol = itemView.findViewById(R.id.textProtocol);
+            roomNumber = itemView.findViewById(R.id.textRoomNumber);
         }
     }
 }

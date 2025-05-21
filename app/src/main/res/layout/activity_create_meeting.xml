@@ -40,6 +40,13 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content" />
 
+        <EditText
+            android:id="@+id/editRoomNumber"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Номер кабинета (опционально)"
+            android:inputType="text"/>
+
         <Button
             android:id="@+id/btnSave"
             android:layout_width="match_parent"

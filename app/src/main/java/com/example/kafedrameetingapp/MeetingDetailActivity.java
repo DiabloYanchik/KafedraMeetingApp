@@ -26,6 +26,7 @@ public class MeetingDetailActivity extends AppCompatActivity {
         TextView date = findViewById(R.id.detailDate);
         TextView time = findViewById(R.id.detailTime);
         TextView protocol = findViewById(R.id.detailProtocol);
+        TextView roomNumber = findViewById(R.id.detailRoomNumber);
         Button btnEdit = findViewById(R.id.btnEdit);
         Button btnDelete = findViewById(R.id.btnDelete);
 
@@ -34,6 +35,7 @@ public class MeetingDetailActivity extends AppCompatActivity {
         date.setText("Дата: " + (meeting.date != null ? meeting.date : ""));
         time.setText("Время: " + (meeting.time != null ? meeting.time : ""));
         protocol.setText("Протокол №: " + meeting.protocolNumber);
+        roomNumber.setText("Кабинет: " + (meeting.roomNumber != null && !meeting.roomNumber.isEmpty() ? meeting.roomNumber : "Не указан"));
 
         boolean isArchived = getIntent().getBooleanExtra("isArchived", false);
 
@@ -57,14 +59,14 @@ public class MeetingDetailActivity extends AppCompatActivity {
             if (meeting.getId() != null) {
                 FirebaseUtils.Callback callback = new FirebaseUtils.Callback() {
                     @Override
-                    public void onSuccess() {
+                    public void onSuccess(String meetingId) {
                         Toast.makeText(MeetingDetailActivity.this, "Заседание удалено", Toast.LENGTH_SHORT).show();
                         finish();
                     }
 
                     @Override
-                    public void onSuccess(int ignored) {
-                        // Пустая реализация
+                    public void onSuccess(int protocolNumber) {
+                        // Не используется для удаления
                     }
 
                     @Override

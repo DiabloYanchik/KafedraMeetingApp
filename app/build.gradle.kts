@@ -33,17 +33,22 @@ android {
 }
 
 dependencies {
-    //доп
-    implementation ("com.google.code.gson:gson:2.10.1")
+    // JSON
+    implementation("com.google.code.gson:gson:2.10.1")
 
+    // Firebase
     implementation(libs.firebase.database)
     implementation(libs.firebase.messaging)
     implementation(libs.firebase.auth)
 
-    implementation (libs.core)
+    // Work
+    implementation(libs.androidx.work.runtime.ktx)
 
-    implementation (libs.cardview )// Для CardView
-    implementation (libs.recyclerview)
+    implementation(libs.core)
+
+    // CardView
+    implementation(libs.cardview)
+    implementation(libs.recyclerview)
 
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.material)

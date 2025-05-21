@@ -14,42 +14,52 @@ import com.example.kafedrameetingapp.MainActivity;
 import com.example.kafedrameetingapp.R;
 
 public class NotificationReceiver extends BroadcastReceiver {
+    private static final String CHANNEL_ID = "meeting_channel";
+
     @Override
     public void onReceive(Context context, Intent intent) {
-        String channelId = "meeting_channel";
         NotificationManager manager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
 
+        // Создаем канал уведомлений
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             NotificationChannel channel = new NotificationChannel(
-                    channelId, "Meeting Notifications", NotificationManager.IMPORTANCE_HIGH);
+                    CHANNEL_ID, "Meeting Notifications", NotificationManager.IMPORTANCE_HIGH);
+            channel.setDescription("Notifications for upcoming department meetings");
             manager.createNotificationChannel(channel);
         }
 
-        int protocolNumber = intent.getIntExtra("protocolNumber", 0);
-        String topic = intent.getStringExtra("topic");
-        String date = intent.getStringExtra("date");
-        String time = intent.getStringExtra("time");
-        String roomNumber = intent.getStringExtra("roomNumber");
+        // Извлекаем данные из Intent (для локальных уведомлений, если они остались)
+        String title = intent.getStringExtra("title");
+        String message = intent.getStringExtra("message");
 
-        String message = "Заседание скоро начнется.\n" +
-                "Тема: " + (topic != null ? topic : "Не указано") + "\n" +
-                "Дата: " + (date != null ? date : "") + " " + (time != null ? time : "") +
-                (protocolNumber != 0 ? "\nПротокол №" + protocolNumber : "") +
-                (roomNumber != null ? "\nКабинет: " + roomNumber : "");
+        // Если данные пришли через FCM
+        if (title == null || message == null) {
+            title = intent.getStringExtra("gcm.notification.title");
+            message = intent.getStringExtra("gcm.notification.body");
+            if (title == null) {
+                title = "Скоро заседание кафедры!";
+            }
+            if (message == null) {
+                message = "Заседание скоро начнется.";
+            }
+        }
 
+        // Создаем PendingIntent для перехода в MainActivity
         Intent notificationIntent = new Intent(context, MainActivity.class);
         PendingIntent pendingIntent = PendingIntent.getActivity(
                 context, 0, notificationIntent, PendingIntent.FLAG_IMMUTABLE);
 
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(context, channelId)
+        // Строим уведомление
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_launcher_foreground)
-                .setContentTitle("Скоро заседание кафедры!")
+                .setContentTitle(title)
                 .setContentText(message)
                 .setStyle(new NotificationCompat.BigTextStyle().bigText(message))
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setContentIntent(pendingIntent)
                 .setAutoCancel(true);
 
+        // Отображаем уведомление
         manager.notify((int) System.currentTimeMillis(), builder.build());
     }
 }

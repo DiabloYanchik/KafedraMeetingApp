@@ -17,10 +17,13 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.work.PeriodicWorkRequest;
+import androidx.work.WorkManager;
 
 import com.example.kafedrameetingapp.adapters.MeetingAdapter;
 import com.example.kafedrameetingapp.models.Meeting;
 import com.example.kafedrameetingapp.utils.FirebaseUtils;
+import com.example.kafedrameetingapp.work.NotificationWorker;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
@@ -34,8 +37,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.TimeUnit;
 
 public class MainActivity extends AppCompatActivity {
+    private static final String TAG = "MainActivity";
     Button btnCreate, btnArchive, btnLogout;
     RecyclerView recyclerView;
     MeetingAdapter adapter;
@@ -47,12 +52,15 @@ public class MainActivity extends AppCompatActivity {
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_main);
 
+        // Запрос разрешения на уведомления
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.POST_NOTIFICATIONS)
                     != PackageManager.PERMISSION_GRANTED) {
                 ActivityCompat.requestPermissions(this,
                         new String[]{android.Manifest.permission.POST_NOTIFICATIONS},
                         1001);
+            } else {
+                Log.d(TAG, "POST_NOTIFICATIONS permission already granted");
             }
         }
 
@@ -73,14 +81,14 @@ public class MainActivity extends AppCompatActivity {
         FirebaseUtils.loadMeetings(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
-                Log.d("MainActivity", "DataSnapshot: " + snapshot.toString());
+                Log.d(TAG, "DataSnapshot: " + snapshot.toString());
                 meetings.clear();
                 for (DataSnapshot data : snapshot.getChildren()) {
                     Meeting meeting = data.getValue(Meeting.class);
                     if (meeting != null) {
                         meeting.setId(data.getKey());
                         meetings.add(meeting);
-                        Log.d("MainActivity", "Meeting loaded: " + meeting.getTopic());
+                        Log.d(TAG, "Meeting loaded: " + meeting.getTopic());
                     }
                 }
                 Collections.sort(meetings, (m1, m2) -> {
@@ -88,6 +96,7 @@ public class MainActivity extends AppCompatActivity {
                     try {
                         return sdf.parse(m1.date + " " + m1.time).compareTo(sdf.parse(m2.date + " " + m2.time));
                     } catch (ParseException e) {
+                        Log.e(TAG, "Ошибка сортировки: " + e.getMessage());
                         return 0;
                     }
                 });
@@ -100,14 +109,15 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        FirebaseMessaging.getInstance().subscribeToTopic("meetings")
-                .addOnCompleteListener(task -> {
-                    if (task.isSuccessful()) {
-                        Toast.makeText(MainActivity.this, "Подписка на уведомления успешна", Toast.LENGTH_SHORT).show();
-                    } else {
-                        Toast.makeText(MainActivity.this, "Ошибка подписки на уведомления", Toast.LENGTH_SHORT).show();
-                    }
-                });
+        // Планируем периодическую проверку уведомлений
+        PeriodicWorkRequest notificationCheckRequest =
+                new PeriodicWorkRequest.Builder(NotificationWorker.class, 15, TimeUnit.MINUTES)
+                        .build();
+        WorkManager.getInstance(this).enqueue(notificationCheckRequest);
+        Log.d(TAG, "Scheduled periodic notification check");
+
+        // Подписка на FCM
+        subscribeToFCMTopic();
 
         btnCreate.setOnClickListener(v -> {
             Intent intent = new Intent(this, CreateMeetingActivity.class);
@@ -125,6 +135,15 @@ public class MainActivity extends AppCompatActivity {
             SharedPreferences.Editor editor = prefs.edit();
             editor.clear();
             editor.apply();
+            // Отписка от FCM и удаление токена
+            FirebaseMessaging.getInstance().unsubscribeFromTopic("meetings")
+                    .addOnCompleteListener(task -> {
+                        Log.d(TAG, "Unsubscribed from meetings topic: " + task.isSuccessful());
+                    });
+            FirebaseMessaging.getInstance().deleteToken()
+                    .addOnCompleteListener(task -> {
+                        Log.d(TAG, "FCM token deleted: " + task.isSuccessful());
+                    });
             Intent intent = new Intent(this, LoginActivity.class);
             intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
             startActivity(intent);
@@ -139,13 +158,37 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    private void subscribeToFCMTopic() {
+        FirebaseMessaging.getInstance().subscribeToTopic("meetings")
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        Log.d(TAG, "Subscribed to meetings topic");
+                        Toast.makeText(MainActivity.this, "Подписка на уведомления успешна", Toast.LENGTH_SHORT).show();
+                    } else {
+                        Log.e(TAG, "Failed to subscribe to meetings topic: " + task.getException());
+                        Toast.makeText(MainActivity.this, "Ошибка подписки на уведомления", Toast.LENGTH_SHORT).show();
+                    }
+                });
+        FirebaseMessaging.getInstance().getToken()
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        Log.d(TAG, "FCM Token: " + task.getResult());
+                    } else {
+                        Log.e(TAG, "Failed to get FCM Token: " + task.getException());
+                    }
+                });
+    }
+
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == 1001) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                Log.d(TAG, "POST_NOTIFICATIONS permission granted");
                 Toast.makeText(this, "Разрешение на уведомления получено", Toast.LENGTH_SHORT).show();
+                subscribeToFCMTopic();
             } else {
+                Log.w(TAG, "POST_NOTIFICATIONS permission denied");
                 Toast.makeText(this, "Разрешение на уведомления не предоставлено", Toast.LENGTH_SHORT).show();
             }
         }
